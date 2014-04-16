@@ -2,10 +2,10 @@
 /**
  * Phergie (http://phergie.org)
  *
- * @link http://github.com/phergie/phergie-irc-bot-react for the canonical source repository
+ * @link http://github.com/phergie/phergie-irc-plugin-react-autojoin for the canonical source repository
  * @copyright Copyright (c) 2008-2014 Phergie Development Team (http://phergie.org)
  * @license http://phergie.org/license New BSD License
- * @package Phergie\Irc\Bot\React
+ * @package Phergie\Irc\Plugin\React\AutoJoin
  */
 
 namespace Phergie\Irc\Plugin\React\AutoJoin;
