@@ -37,6 +37,17 @@ new \Phergie\Irc\Plugin\React\AutoJoin\Plugin(array(
 ))
 ```
 
+## Tests
+
+To run the unit test suite:
+
+```
+curl -s https://getcomposer.org/installer | php
+php composer.phar install
+cd tests
+../vendor/bin/phpunit
+```
+
 ## License
 
 Released under the BSD License. See `LICENSE`.
