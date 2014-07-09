@@ -8,11 +8,12 @@
  * @package Phergie\Irc\Plugin\React\AutoJoin
  */
 
-namespace Phergie\Irc\Plugin\React\AutoJoin;
+namespace Phergie\Irc\Tests\Plugin\React\AutoJoin;
 
 use Phake;
-use Phergie\Irc\Event\EventInterface;
 use Phergie\Irc\Bot\React\EventQueueInterface;
+use Phergie\Irc\Event\EventInterface;
+use Phergie\Irc\Plugin\React\AutoJoin\Plugin;
 
 /**
  * Tests for the Plugin class.
