@@ -34,6 +34,9 @@ new \Phergie\Irc\Plugin\React\AutoJoin\Plugin(array(
     // or
     'keys' => array('key1', 'key2', 'keyN'),
 
+    // Optional: if true, doesn't join channels until the NickServ plugin has successfully logged in.
+    'wait-for-nickserv' => true,
+
 ))
 ```
 

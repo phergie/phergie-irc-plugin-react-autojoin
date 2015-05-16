@@ -37,6 +37,14 @@ class Plugin extends AbstractPlugin
     protected $keys = null;
 
     /**
+     * Whether to listen for NickServ identification
+     * instead of the MOTD.
+     *
+     * @var bool
+     */
+    protected $awaitNickServ = false;
+
+    /**
      * Accepts plugin configuration.
      *
      * Supported keys:
@@ -46,6 +54,9 @@ class Plugin extends AbstractPlugin
      *
      * keys - optional, either a comma-delimited string or array of keys
      * corresponding to the channels to join
+     *
+     * wait-for-nickserv - optional, set to true to wait for the NickServ plugin
+     * to successfully authenticate before joining channels
      *
      * @param array $config
      */
@@ -64,32 +75,41 @@ class Plugin extends AbstractPlugin
                 ? implode(',', $config['keys'])
                 : $config['keys'];
         }
+
+        if (!empty($config['wait-for-nickserv'])) {
+            $this->awaitNickServ = true;
+        }
     }
 
     /**
-     * Indicates that the plugin monitors events indicating an end or lack of a
-     * message of the day, at which point the client should be authenticated and
+     * Indicates that the plugin monitors events indicating either:
+     * - a NickServ auth event (if wait-for-nickserv is set); or
+     * - an end or lack of a message of the day,
+     * at which point the client should be authenticated and
      * in a position to join channels.
      *
      * @return array
      */
     public function getSubscribedEvents()
     {
-        return array(
-            'irc.received.rpl_endofmotd' => 'joinChannels',
-            'irc.received.err_nomotd' => 'joinChannels',
-        );
+        return $this->awaitNickServ
+            ? array(
+                'nickserv.identified' => 'joinChannels',
+            )
+            : array(
+                'irc.received.rpl_endofmotd' => 'joinChannels',
+                'irc.received.err_nomotd' => 'joinChannels',
+            );
     }
 
     /**
      * Joins the provided list of channels.
      *
-     * @param \Phergie\Irc\Event\EventInterface $event Unused, as it only
-     *        matters that one of the subscribed events has occurred, not which
-     *        or any related event data
+     * @param mixed $dummy Unused, as it only matters that one of the
+     *        subscribed events has occurred, not what it is
      * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
      */
-    public function joinChannels(EventInterface $event, EventQueueInterface $queue)
+    public function joinChannels($dummy, EventQueueInterface $queue)
     {
         $queue->ircJoin($this->channels, $this->keys);
     }
