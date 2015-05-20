@@ -12,7 +12,7 @@ The recommended method of installation is [through composer](http://getcomposer.
 ```JSON
 {
     "require": {
-        "phergie/phergie-irc-plugin-react-autojoin": "1.0.*"
+        "phergie/phergie-irc-plugin-react-autojoin": "~1.1"
     }
 }
 ```
@@ -22,23 +22,37 @@ See Phergie documentation for more information on installing plugins.
 ## Configuration
 
 ```php
-new \Phergie\Irc\Plugin\React\AutoJoin\Plugin(array(
+return array(
+    'plugins' => array(
 
-    // Required: list of channels to join
-    'channels' => '#channel1,#channel2,#channelN',
-    // or
-    'channels' => array('#channel1', '#channel2', '#channelN'),
+        new \Phergie\Irc\Plugin\React\AutoJoin\Plugin(array(
 
-    // Optional: channel keys
-    'keys' => 'key1,key2,keyN',
-    // or
-    'keys' => array('key1', 'key2', 'keyN'),
+            // Required: list of channels to join
+            'channels' => '#channel1,#channel2,#channelN',
+            // or
+            'channels' => array('#channel1', '#channel2', '#channelN'),
 
-    // Optional: if true, doesn't join channels until the NickServ plugin has successfully logged in.
-    'wait-for-nickserv' => true,
+            // Optional: channel keys
+            'keys' => 'key1,key2,keyN',
+            // or
+            'keys' => array('key1', 'key2', 'keyN'),
 
-))
+            // Optional: if true, doesn't join channels until
+            // the NickServ plugin has successfully logged in
+            'wait-for-nickserv' => true,
+
+        )),
+
+        // If wait-for-nickserv is enabled, the NickServ plugin must also be used
+        new \Phergie\Irc\Plugin\React\NickServ(array(
+            /* .... */
+        )),
+
+    ),
+);
 ```
+
+The option `wait-for-nickserv` depends on the [NickServ plugin](https://github.com/phergie/phergie-irc-plugin-react-nickserv) version >=1.3.0.
 
 ## Tests
 
