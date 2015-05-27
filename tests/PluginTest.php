@@ -95,11 +95,59 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Tests that getSubscribedEvents() returns an array.
+     * Tests joining channels on NickServ authentication.
      */
-    public function testGetSubscribedEvents()
+    public function testJoinChannelsOnAuth()
     {
-        $plugin = new Plugin(array('channels' => '#channel1'));
-        $this->assertInternalType('array', $plugin->getSubscribedEvents());
+        $connection = Phake::mock('\Phergie\Irc\ConnectionInterface');
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $plugin = new Plugin(array(
+            'channels' => '#channel1',
+            'wait-for-nickserv' => true,
+        ));
+        $plugin->joinChannels($connection, $queue);
+        Phake::verify($queue)->ircJoin('#channel1', null);
+    }
+
+    /**
+     * Data provider for testGetSubscribedEvents
+     *
+     * @return array
+     */
+    public function dataProviderGetSubscribedEvents()
+    {
+        return array(
+            array(
+                array(
+                    'channels' => '#channel1',
+                ),
+                array(
+                    'irc.received.rpl_endofmotd' => 'joinChannels',
+                    'irc.received.err_nomotd' => 'joinChannels',
+                ),
+            ),
+            array(
+                array(
+                    'channels' => '#channel1',
+                    'wait-for-nickserv' => true,
+                ),
+                array(
+                    'nickserv.identified' => 'joinChannels',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Tests that getSubscribedEvents() returns the correct event listeners.
+     *
+     * @param array $config
+     * @param array $events
+     * @dataProvider dataProviderGetSubscribedEvents
+     */
+    public function testGetSubscribedEvents(array $config, array $events)
+    {
+        $plugin = new Plugin($config);
+        $this->assertEquals($events, $plugin->getSubscribedEvents());
     }
 }
