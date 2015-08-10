@@ -52,7 +52,7 @@ class Plugin extends AbstractPlugin
     protected $rejoinChannels = false;
 
     /**
-     * Array list of channels to rejoin
+     * Array list of channels keys to rejoin
      *
      * @var array
      */
@@ -71,6 +71,10 @@ class Plugin extends AbstractPlugin
      *
      * wait-for-nickserv - optional, set to true to wait for the NickServ plugin
      * to successfully authenticate before joining channels
+     *
+     * auto-rejoin - optional, set to true to rejoin all channels in 'channels'
+     * option, or set a comma-delimited string or array of names of channels to
+     * rejoin only in these channels.
      *
      * @param array $config
      */
@@ -94,7 +98,7 @@ class Plugin extends AbstractPlugin
             $this->awaitNickServ = true;
         }
 
-        if (isset($config['auto-rejoin'])) {
+        if (isset($config['auto-rejoin']) && $config['auto-rejoin']) {
             if ($config['auto-rejoin'] === true) {
                 $this->rejoinChannels = explode(',', $this->channels);
             } elseif (is_string($config['auto-rejoin'])) {
@@ -127,6 +131,7 @@ class Plugin extends AbstractPlugin
      * - an end or lack of a message of the day,
      * at which point the client should be authenticated and
      * in a position to join channels.
+     * If auto-rejoin is set the plugin also monitors part and kick events.
      *
      * @return array
      */
