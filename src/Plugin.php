@@ -12,7 +12,7 @@ namespace Phergie\Irc\Plugin\React\AutoJoin;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface;
-use Phergie\Irc\Event\EventInterface;
+use Phergie\Irc\Event\UserEventInterface;
 
 /**
  * Plugin for automatically joining channels.
@@ -43,6 +43,20 @@ class Plugin extends AbstractPlugin
      * @var bool
      */
     protected $awaitNickServ = false;
+
+    /**
+     * Array list of channels to rejoin
+     *
+     * @var array
+     */
+    protected $rejoinChannels = false;
+
+    /**
+     * Array list of channels to rejoin
+     *
+     * @var array
+     */
+    protected $rejoinKeys = array();
 
     /**
      * Accepts plugin configuration.
@@ -79,6 +93,32 @@ class Plugin extends AbstractPlugin
         if (!empty($config['wait-for-nickserv'])) {
             $this->awaitNickServ = true;
         }
+
+        if (isset($config['auto-rejoin'])) {
+            if ($config['auto-rejoin'] === true) {
+                $this->rejoinChannels = explode(',', $this->channels);
+            } elseif (is_string($config['auto-rejoin'])) {
+                $this->rejoinChannels = explode(',', $config['auto-rejoin']);
+            } elseif (is_array($config['auto-rejoin'])) {
+                $this->rejoinChannels = $config['auto-rejoin'];
+            } else {
+                throw new \InvalidArgumentException('"auto-rejoin" must be '.
+                    'boolean, string or array');
+            }
+
+            if ($this->keys != null) {
+                $channels = explode(',', $this->channels);
+                $keys = explode(',', $this->keys);
+                foreach ($this->rejoinChannels as $key => $value) {
+                    $index = array_search($value, $channels);
+                    $this->rejoinKeys[$key] = $index !== false
+                        ? $keys[$index] : null;
+                }
+            } else {
+                $this->rejoinKeys = array_fill(0,
+                    count($this->rejoinChannels), null);
+            }
+        }
     }
 
     /**
@@ -92,13 +132,21 @@ class Plugin extends AbstractPlugin
      */
     public function getSubscribedEvents()
     {
-        return $this->awaitNickServ
-            ? array(
-                'nickserv.identified' => 'joinChannels',
-            )
-            : array(
-                'irc.received.rpl_endofmotd' => 'joinChannels',
-                'irc.received.err_nomotd' => 'joinChannels',
+        return array_merge(
+            $this->awaitNickServ
+                ? array(
+                    'nickserv.identified' => 'joinChannels',
+                )
+                : array(
+                    'irc.received.rpl_endofmotd' => 'joinChannels',
+                    'irc.received.err_nomotd' => 'joinChannels',
+                ),
+            $this->rejoinChannels
+                ? array(
+                    'irc.received.part' => 'onPartChannels',
+                    'irc.received.kick' => 'onKickChannels',
+                )
+                : array()
             );
     }
 
@@ -112,5 +160,37 @@ class Plugin extends AbstractPlugin
     public function joinChannels($dummy, EventQueueInterface $queue)
     {
         $queue->ircJoin($this->channels, $this->keys);
+    }
+
+    /**
+     * Rejoins a channel in provided list of channels on a part event.
+     *
+     * @param \Phergie\Irc\Event\UserEventInterface $event
+     * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+     */
+    public function onPartChannels(UserEventInterface $event, EventQueueInterface $queue)
+    {
+        if ($event->getNick() == $event->getConnection()->getNickname()
+            && in_array($event->getSource(), $this->rejoinChannels)) {
+            $index = array_search($event->getSource(), $this->rejoinChannels);
+            $queue->ircJoin($this->rejoinChannels[$index],
+                $this->rejoinKeys[$index]);
+        }
+    }
+
+    /**
+     * Rejoins a channel in provided list of channels on a kick event.
+     *
+     * @param \Phergie\Irc\Event\UserEventInterface $event
+     * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+     */
+    public function onKickChannels(UserEventInterface $event, EventQueueInterface $queue)
+    {
+        if ($event->getParams()['user'] == $event->getConnection()->getNickname()
+            && in_array($event->getSource(), $this->rejoinChannels)) {
+            $index = array_search($event->getSource(), $this->rejoinChannels);
+            $queue->ircJoin($this->rejoinChannels[$index],
+                $this->rejoinKeys[$index]);
+        }
     }
 }
