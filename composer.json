@@ -13,8 +13,7 @@
         "phergie/phergie-irc-bot-react": "~1"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.6",
-        "phake/phake": "~2"
+        "phergie/phergie-irc-bot-react-development": "~1.0"
     },
     "suggest": {
         "phergie/phergie-irc-plugin-react-nickserv": "Enables wait-for-nickserv autojoin functionality"
