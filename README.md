@@ -12,7 +12,7 @@ The recommended method of installation is [through composer](http://getcomposer.
 ```JSON
 {
     "require": {
-        "phergie/phergie-irc-plugin-react-autojoin": "~1.1"
+        "phergie/phergie-irc-plugin-react-autojoin": "~2"
     }
 }
 ```
