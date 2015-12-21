@@ -10,7 +10,7 @@
         "source": "https://github.com/phergie/phergie-irc-plugin-react-autojoin"
     },
     "require": {
-        "phergie/phergie-irc-bot-react": "~1"
+        "phergie/phergie-irc-bot-react": "~2"
     },
     "require-dev": {
         "phergie/phergie-irc-bot-react-development": "~1.0"
