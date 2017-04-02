@@ -41,6 +41,14 @@ return array(
             // the NickServ plugin has successfully logged in
             'wait-for-nickserv' => true,
 
+            // Optional: if true, joins all channels in 'channels' config
+            // Defaults to false, and don't rejoin automatically
+            'auto-rejoin' => true,
+            // or
+            'auto-rejoin' => '#channel1,#channel2',
+            // or
+            'auto-rejoin' => array('#channel1', '#channel2'),
+
         )),
 
         // If wait-for-nickserv is enabled, the NickServ plugin must also be used

@@ -110,6 +110,103 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Data provider for testRejoinChannels().
+     *
+     * @return array
+     */
+    public function dataProviderRejoinChannels()
+    {
+        $data = array();
+
+        // Channels string, no keys
+        $data[] = array(
+            array(
+                'channels' => '#channel1',
+                'auto-rejoin' => true,
+            ),
+            null,
+        );
+
+        // Channels string, keys string
+        $data[] = array(
+            array(
+                'channels' => '#channel1',
+                'keys' => 'key1',
+                'auto-rejoin' => true,
+            ),
+            'key1',
+        );
+
+        // Channels array, keys array, rejoin array
+        $data[] = array(
+            array(
+                'channels' => array('#channel1', '#channel2'),
+                'keys' => array('key1', 'key2'),
+                'auto-rejoin' => array('#channel1'),
+            ),
+            'key1',
+        );
+
+        return $data;
+    }
+
+    /**
+     * Tests rejoining channels on part and kick events.
+     *
+     * @param array $config Plugin configuration
+     * @param string|null $key Expected parameter to ircJoin()
+     * @dataProvider dataProviderRejoinChannels
+     */
+    public function testRejoinChannels(array $config, $key)
+    {
+        $connection = $this->getMockConnection('mynickname');
+        $event = $this->getMockUserEvent('mynickname','#channel1', $connection);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $plugin = new Plugin($config);
+        $plugin->onPartChannels($event, $queue);
+        $plugin->onKickChannels($event, $queue);
+        Phake::verify($queue, Phake::times(2))->ircJoin('#channel1', $key);
+    }
+
+    /**
+     * Tests ignore other users part and kick events.
+     *
+     * @param array $config Plugin configuration
+     * @param string|null $key Expected parameter to ircJoin()
+     * @dataProvider dataProviderRejoinChannels
+     */
+    public function testDontRejoinChannelsOnOtherUser(array $config, $key)
+    {
+        $connection = $this->getMockConnection('mynickname');
+        $event = $this->getMockUserEvent('othernickname','#channel1', $connection);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $plugin = new Plugin($config);
+        $plugin->onPartChannels($event, $queue);
+        $plugin->onKickChannels($event, $queue);
+        Phake::verify($queue, Phake::never())->ircJoin('#channel1', $key);
+    }
+
+    /**
+     * Tests ignore other channels part and kick events.
+     * (this seems strange, but on data set #3 makes sense)
+     *
+     * @param array $config Plugin configuration
+     * @param string|null $key Expected parameter to ircJoin()
+     * @dataProvider dataProviderRejoinChannels
+     */
+    public function testDontRejoinChannelsOnOtherChannel(array $config, $key)
+    {
+        $connection = $this->getMockConnection('mynickname');
+        $event = $this->getMockUserEvent('mynickname','#channel2', $connection);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $plugin = new Plugin($config);
+        $plugin->onPartChannels($event, $queue);
+        $plugin->onKickChannels($event, $queue);
+        Phake::verify($queue, Phake::never())->ircJoin('#channel1', $key);
+        Phake::verify($queue, Phake::never())->ircJoin('#channel2', $key);
+    }
+
+    /**
      * Data provider for testGetSubscribedEvents
      *
      * @return array
@@ -135,6 +232,30 @@ class PluginTest extends \PHPUnit_Framework_TestCase
                     'nickserv.identified' => 'joinChannels',
                 ),
             ),
+            array(
+                array(
+                    'channels' => '#channel1',
+                    'auto-rejoin' => true,
+                ),
+                array(
+                    'irc.received.rpl_endofmotd' => 'joinChannels',
+                    'irc.received.err_nomotd' => 'joinChannels',
+                    'irc.received.part' => 'onPartChannels',
+                    'irc.received.kick' => 'onKickChannels',
+                ),
+            ),
+            array(
+                array(
+                    'channels' => '#channel1',
+                    'wait-for-nickserv' => true,
+                    'auto-rejoin' => array('#channel1'),
+                ),
+                array(
+                    'nickserv.identified' => 'joinChannels',
+                    'irc.received.part' => 'onPartChannels',
+                    'irc.received.kick' => 'onKickChannels',
+                ),
+            ),
         );
     }
 
@@ -149,5 +270,36 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     {
         $plugin = new Plugin($config);
         $this->assertEquals($events, $plugin->getSubscribedEvents());
+    }
+
+    /**
+     * Returns a mock user event.
+     *
+     * @return \Phergie\Irc\Event\UserEventInterface
+     */
+    protected function getMockUserEvent($nickname, $channel, $connection)
+    {
+        $mock = Phake::mock('\Phergie\Irc\Event\UserEventInterface');
+        Phake::when($mock)->getNick()->thenReturn($nickname);
+        Phake::when($mock)->getSource()->thenReturn($channel);
+        Phake::when($mock)->getConnection()->thenReturn($connection);
+        Phake::when($mock)->getParams()->thenReturn(array(
+            'channel' => $channel,
+            'channels' => $channel,
+            'user' => $nickname,
+        ));
+        return $mock;
+    }
+
+    /**
+     * Returns a mock connection.
+     *
+     * @return \Phergie\Irc\ConnectionInterface
+     */
+    protected function getMockConnection($nickname)
+    {
+        $mock = Phake::mock('\Phergie\Irc\ConnectionInterface');
+        Phake::when($mock)->getNickname()->thenReturn($nickname);
+        return $mock;
     }
 }
