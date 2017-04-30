@@ -9,12 +9,8 @@ join channels when connecting to servers.
 
 The recommended method of installation is [through composer](http://getcomposer.org).
 
-```JSON
-{
-    "require": {
-        "phergie/phergie-irc-plugin-react-autojoin": "~2"
-    }
-}
+```
+composer require phergie/phergie-irc-plugin-react-autojoin
 ```
 
 See Phergie documentation for more information on installing plugins.
