@@ -1,4 +1,5 @@
 {
+    "abandoned": true,
     "name": "phergie/phergie-irc-plugin-react-autojoin",
     "description": "Phergie plugin for automatically joining IRC channels",
     "keywords": [ "irc", "bot", "react", "plugin" ],
